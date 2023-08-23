@@ -12,6 +12,7 @@ import re
 def printPcap(pcap):
 	strs = []
 	vuln_ip = []
+	domain_name = []
 	for (ts,buf) in pcap:
 			#print(buf)
 			eth = dpkt.ethernet.Ethernet(buf)
@@ -23,6 +24,23 @@ def printPcap(pcap):
 			#print(type(ip.data))
 			#print(type(dpkt.tcp.TCP))
 			#print(isinstance(ip.data, dpkt.tcp.TCP))
+			#print(type(ip.data))
+			#print(type(dpkt.dns.DNS))
+			try:
+				udp = ip.data
+			except:
+				pass
+
+			try:
+				dns = dpkt.dns.DNS(udp.data)
+				#print("dns распознан")
+				for qname in dns.qd:
+					domain_name=qname.name
+					#print("domain name:", domain_name)
+			except:
+				pass
+
+
 
 			#если tcp данные могут быть:
 			if isinstance(ip.data, dpkt.tcp.TCP):
@@ -56,7 +74,7 @@ def printPcap(pcap):
 					strs.append("━" * 116)
 				else:
 					strs.append("not find user_agent string ")
-	return strs, vuln_ip
+	return strs, vuln_ip, domain_name
 
 #функция для вычленения юзер агента из pcap файла
 def find_user_agent(tcp_data):
@@ -196,18 +214,33 @@ def main():
 	else:
 		print(f"Путь не сущетсвует \"{folder_path}\" ")
 		folder_path = input("введите путь до папки : ")
+
 	start_time = time.time()
 	#folder_path="C:\\Users\\tarasov.is\Downloads"
 	pcap_files = glob.glob(folder_path + "/*.pcap")
+
+	#cписки для хранения всякого
 	count_pcapfiles=0
-	strs=[]
-	vuln_ip_list=[]
+	strs=[]#этот cписок для основного лога
+	vuln_ip_list=[]#этот cписок для айпи с уязвимыми версиями
+	domain_name_list=[]#этот cписок для всех доменных имен
+
+#основной цикл с вызовом функий и записью файла
 	for pcap_file in pcap_files:
+
 		count_pcapfiles+=1
 		strs.append("\n" + pcap_file)
+
 		f = open(pcap_file, 'rb')
+
 		pcap = dpkt.pcap.Reader(f)
-		all_parse, vuln_ip = printPcap(pcap)
+		#вызов основной функции
+		all_parse, vuln_ip, domain_name = printPcap(pcap)
+
+		#составляем список если нашли домены
+		domain_name_list.append(domain_name)
+
+		#чекаем чтобы массив с айпи был не пустой
 		if vuln_ip != [] and vuln_ip !=[[]]:
 			print(f"{vuln_ip}\n{pcap_file}\n")
 			vuln_ip_list.append(vuln_ip)
@@ -228,6 +261,12 @@ def main():
 		for item in flat_vuln_ip_list:
 			txt_file.write(item+'\n')
 
+	flat_domain_name_list = flatten_list(domain_name_list)
+	output_domain_name_list = "PARSER_domain_names.txt"
+
+	with open(output_domain_name_list,'w',encoding='utf-8') as txt_file:
+		for item in flat_domain_name_list:
+			txt_file.write(item+'\n')
 
 
 
