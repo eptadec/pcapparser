@@ -239,7 +239,7 @@ def main():
 
 		#составляем список если нашли домены
 		if domain_name !=[]:
-			print(domain_name)
+			#print(domain_name)
 			domain_name_list.append(domain_name)
 			match=re.search(r'id-(\d+)\.pcap', pcap_file)
 			if match:
