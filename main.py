@@ -19,7 +19,6 @@ def printPcap(pcap):
 			ip = eth.data
 
 
-
 			#print("protocol =",proto)
 			#print(type(ip.data))
 			#print(type(dpkt.tcp.TCP))
@@ -39,7 +38,6 @@ def printPcap(pcap):
 					#print("domain name:", domain_name)
 			except:
 				pass
-
 
 
 			#если tcp данные могут быть:
