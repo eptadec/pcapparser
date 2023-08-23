@@ -17,7 +17,9 @@ def printPcap(pcap):
 			#print(buf)
 			eth = dpkt.ethernet.Ethernet(buf)
 			ip = eth.data
-
+			# read the destination IP in dst
+			src = socket.inet_ntoa(ip.src)
+			dst = socket.inet_ntoa(ip.dst)
 
 			#print("protocol =",proto)
 			#print(type(ip.data))
@@ -34,7 +36,7 @@ def printPcap(pcap):
 				dns = dpkt.dns.DNS(udp.data)
 				#print("dns распознан")
 				for qname in dns.qd:
-					domain_name=qname.name
+					domain_name.append(src + ' | ' + dst + ' s|d: '+ qname.name)
 					#print("domain name:", domain_name)
 			except:
 				pass
@@ -236,7 +238,12 @@ def main():
 		all_parse, vuln_ip, domain_name = printPcap(pcap)
 
 		#составляем список если нашли домены
-		domain_name_list.append(domain_name)
+		if domain_name !=[]:
+			print(domain_name)
+			domain_name_list.append(domain_name)
+			match=re.search(r'id-(\d+)\.pcap', pcap_file)
+			if match:
+				domain_name_list.append(match.group(1))
 
 		#чекаем чтобы массив с айпи был не пустой
 		if vuln_ip != [] and vuln_ip !=[[]]:
