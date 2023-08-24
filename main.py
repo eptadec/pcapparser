@@ -15,12 +15,18 @@ def printPcap(pcap):
 	domain_name = []
 	for (ts,buf) in pcap:
 			#print(buf)
+
+
 			eth = dpkt.ethernet.Ethernet(buf)
 			ip = eth.data
 			# read the destination IP in dst
-			src = socket.inet_ntoa(ip.src)
-			dst = socket.inet_ntoa(ip.dst)
 
+			try:
+				src = socket.inet_ntoa(ip.src)
+
+				dst = socket.inet_ntoa(ip.dst)
+			except:
+				pass
 			#print("protocol =",proto)
 			#print(type(ip.data))
 			#print(type(dpkt.tcp.TCP))
@@ -45,12 +51,7 @@ def printPcap(pcap):
 			#если tcp данные могут быть:
 			if isinstance(ip.data, dpkt.tcp.TCP):
 
-				proto = ip.get_proto(ip.p)
-				# read the source IP in src
-				src = socket.inet_ntoa(ip.src)
-				# read the destination IP in dst
-				dst = socket.inet_ntoa(ip.dst)
-				# Set the TCP data
+
 				tcp = ip.data
 				#записывам только строку юзер агент
 				user_agent=find_user_agent(tcp)
