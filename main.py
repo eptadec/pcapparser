@@ -200,100 +200,118 @@ def flatten_list(nested_list):
 
 def main():
 
-
+	indicator = 1
 #'''
-	folder_path=input("введите путь до папки : ")
-	if folder_path == '3':
-		print("C:\\Users\\tarasov.is\Downloads")
-		folder_path = "C:\\Users\\tarasov.is\Downloads"
-	if folder_path == '4':
-		print("C:\\Users\\belkov.ai\Downloads")
-		folder_path = "C:\\Users\\belkov.ai\Downloads"
-	if folder_path == '5':
-		print("C:\\Users\\ivanov-pa\Downloads")
-		folder_path = "C:\\Users\\ivanov-pa\Downloads"
-	if os.path.exists(folder_path):
-		print("путь найден")
-	else:
-		print(f"Путь не сущетсвует \"{folder_path}\" ")
-		folder_path = input("введите путь до папки : ")
+	while(indicator == 1):
+		folder_path=input("(введите 1 для выхода) введите путь до папки : ")
+
+		if folder_path == '1':
+			print("Выход...")
+			return 0
+		if folder_path == '3':
+			print("C:\\Users\\tarasov.is\Downloads")
+			folder_path = "C:\\Users\\tarasov.is\Downloads"
+		if folder_path == '4':
+			print("C:\\Users\\belkov.ai\Downloads")
+			folder_path = "C:\\Users\\belkov.ai\Downloads"
+		if folder_path == '5':
+			print("C:\\Users\\ivanov-pa\Downloads")
+			folder_path = "C:\\Users\\ivanov-pa\Downloads"
+
+		if os.path.exists(folder_path):
+			indicator = 0
+			print("путь существует")
+			break
+		else:
+			print(f"Путь не найден \"{folder_path}\" ")
+
 
 	#НАЧАЛО ПРОГРАММЫ -------------------------------------------------------------
-	start_time = time.time()
-	#folder_path="C:\\Users\\tarasov.is\Downloads"
-	pcap_files = glob.glob(folder_path + "/*.pcap")
+	indicator = '3';
+	while (indicator == '3'):
+		start_time = time.time()
+		print("\n--- --- start parse --- ---\n")
+		#folder_path="C:\\Users\\tarasov.is\Downloads"
 
-	path = folder_path
-	#сортиврока по дате измнения файла для корректного вывода
-	#file_list = os.listdir(path)
+		pcap_files = glob.glob(folder_path + "/*.pcap")
 
-	file_list = pcap_files
-	full_list = [os.path.join(path, i) for i in file_list]
-	time_sorted_list = sorted(full_list, key = os.path.getmtime)
+		path = folder_path
+		#сортиврока по дате измнения файла для корректного вывода
+		#file_list = os.listdir(path)
 
-	pcap_files = time_sorted_list
+		file_list = pcap_files
+		full_list = [os.path.join(path, i) for i in file_list]
+		time_sorted_list = sorted(full_list, key = os.path.getmtime)
 
-	#cписки для хранения всякого
-	count_pcapfiles=0
-	strs=[]#этот cписок для основного лога
-	vuln_ip_list=[]#этот cписок для айпи с уязвимыми версиями
-	domain_name_list=[]#этот cписок для всех доменных имен
+		pcap_files = time_sorted_list
 
-#основной цикл с вызовом функий и записью файла
-	for pcap_file in pcap_files:
-		mtime=(os.path.getmtime(pcap_file))
-		filechange_time=time.ctime(mtime)
-		#print(filechange_time)
-		#print(pcap_file)
-		count_pcapfiles+=1
-		strs.append("\n" + pcap_file)
+		#cписки для хранения всякого
+		count_pcapfiles=0
+		strs=[]#этот cписок для основного лога
+		vuln_ip_list=[]#этот cписок для айпи с уязвимыми версиями
+		domain_name_list=[]#этот cписок для всех доменных имен
 
-		f = open(pcap_file, 'rb')
+	#основной цикл с вызовом функий и записью файла
+		for pcap_file in pcap_files:
+			mtime=(os.path.getmtime(pcap_file))
+			filechange_time=time.ctime(mtime)
+			#print(filechange_time)
+			#print(pcap_file)
+			count_pcapfiles+=1
+			strs.append("\n" + pcap_file)
 
-		pcap = dpkt.pcap.Reader(f)
-		#вызов основной функции
-		all_parse, vuln_ip, domain_name = printPcap(pcap)
+			f = open(pcap_file, 'rb')
 
-		#составляем список если нашли домены
-		if domain_name !=[]:
-			#print(domain_name)
-			domain_name_list.append(domain_name)
-			match=re.search(r'id-(\d+)\.pcap', pcap_file)
-			if match:
-				domain_name_list.append(match.group(1))
+			pcap = dpkt.pcap.Reader(f)
+			#вызов основной функции
+			all_parse, vuln_ip, domain_name = printPcap(pcap)
 
-		#чекаем чтобы массив с айпи был не пустой
-		if vuln_ip != [] and vuln_ip !=[[]]:
-			print(f"{vuln_ip}\n{pcap_file}\n")
-			vuln_ip_list.append(vuln_ip)
-		strs.append(all_parse)
-		f.close()
+			#составляем список если нашли домены
+			if domain_name !=[]:
+				#print(domain_name)
+				domain_name_list.append(domain_name)
+				match=re.search(r'id-(\d+)\.pcap', pcap_file)
+				if match:
+					domain_name_list.append(match.group(1))
 
-	flat_result=flatten_list(strs)
-	output_file="PARSER_LOG.txt"
+			#чекаем чтобы массив с айпи был не пустой
+			if vuln_ip != [] and vuln_ip !=[[]]:
+				print(f"{vuln_ip}\n{pcap_file}\n")
+				vuln_ip_list.append(vuln_ip)
+			strs.append(all_parse)
+			f.close()
 
-	with open(output_file,'w',encoding='utf-8') as txt_file:
-		for item in flat_result:
-			txt_file.write(item+'\n')
+		flat_result=flatten_list(strs)
+		output_file="PARSER_LOG.txt"
 
-	flat_vuln_ip_list = flatten_list(vuln_ip_list)
-	output_vuln_ip_list = "PARSER_vuln_ip.txt"
+		with open(output_file,'w',encoding='utf-8') as txt_file:
+			for item in flat_result:
+				txt_file.write(item+'\n')
 
-	with open(output_vuln_ip_list,'w',encoding='utf-8') as txt_file:
-		for item in flat_vuln_ip_list:
-			txt_file.write(item+'\n')
+		flat_vuln_ip_list = flatten_list(vuln_ip_list)
+		output_vuln_ip_list = "PARSER_vuln_ip.txt"
 
-	flat_domain_name_list = flatten_list(domain_name_list)
-	output_domain_name_list = "PARSER_domain_names.txt"
+		with open(output_vuln_ip_list,'w',encoding='utf-8') as txt_file:
+			for item in flat_vuln_ip_list:
+				txt_file.write(item+'\n')
 
-	with open(output_domain_name_list,'w',encoding='utf-8') as txt_file:
-		for item in flat_domain_name_list:
-			txt_file.write(item+'\n')
+		flat_domain_name_list = flatten_list(domain_name_list)
+		output_domain_name_list = "PARSER_domain_names.txt"
+
+		with open(output_domain_name_list,'w',encoding='utf-8') as txt_file:
+			for item in flat_domain_name_list:
+				txt_file.write(item+'\n')
 
 
 
-	print(f"--- {count_pcapfiles} pcap files in {(time.time() - start_time)} seconds ---")
-	input("нажмите для завершения")
+		print(f"--- {count_pcapfiles} pcap files in {(time.time() - start_time)} seconds ---")
+		indicator=input("нажмите 1 для завершения, 3 для повтороной проверки")
+		print(indicator)
+		if indicator == '1':
+			return 0
+		os.system('cls||clear')
+
+
 '''
 	script_directory = os.path.dirname(os.path.abspath(__file__))
 	#f = open('13.pcap','rb')
