@@ -228,7 +228,7 @@ def main():
 
 	#НАЧАЛО ПРОГРАММЫ -------------------------------------------------------------
 	indicator = '3';
-	while (indicator == '3'):
+	while (indicator == '3' or indicator == '4'):
 		start_time = time.time()
 		print("\n--- --- start parse --- ---\n")
 		#folder_path="C:\\Users\\tarasov.is\Downloads"
@@ -305,12 +305,14 @@ def main():
 
 
 		print(f"--- {count_pcapfiles} pcap files in {(time.time() - start_time)} seconds ---")
-		indicator=input("нажмите 1 для завершения, 3 для повтороной проверки")
+		if indicator != '4':
+			indicator=input("нажмите 1 для завершения, 3 для повтороной проверки, 4 для входа в цикл")
 		print(indicator)
 		if indicator == '1':
 			return 0
-		os.system('cls||clear')
-
+		if indicator == '4':
+			time.sleep(60)
+			os.system('cls||clear')
 
 '''
 	script_directory = os.path.dirname(os.path.abspath(__file__))
