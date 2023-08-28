@@ -16,10 +16,12 @@ def printPcap(pcap):
 	for (ts,buf) in pcap:
 			#print(buf)
 
-
-			eth = dpkt.ethernet.Ethernet(buf)
-			ip = eth.data
+			try:
+				eth = dpkt.ethernet.Ethernet(buf)
+				ip = eth.data
 			# read the destination IP in dst
+			except:
+				continue
 
 			try:
 				src = socket.inet_ntoa(ip.src)
@@ -216,9 +218,20 @@ def main():
 		print(f"Путь не сущетсвует \"{folder_path}\" ")
 		folder_path = input("введите путь до папки : ")
 
+	#НАЧАЛО ПРОГРАММЫ -------------------------------------------------------------
 	start_time = time.time()
 	#folder_path="C:\\Users\\tarasov.is\Downloads"
 	pcap_files = glob.glob(folder_path + "/*.pcap")
+
+	path = folder_path
+	#сортиврока по дате измнения файла для корректного вывода
+	#file_list = os.listdir(path)
+
+	file_list = pcap_files
+	full_list = [os.path.join(path, i) for i in file_list]
+	time_sorted_list = sorted(full_list, key = os.path.getmtime)
+
+	pcap_files = time_sorted_list
 
 	#cписки для хранения всякого
 	count_pcapfiles=0
@@ -228,7 +241,10 @@ def main():
 
 #основной цикл с вызовом функий и записью файла
 	for pcap_file in pcap_files:
-
+		mtime=(os.path.getmtime(pcap_file))
+		filechange_time=time.ctime(mtime)
+		#print(filechange_time)
+		#print(pcap_file)
 		count_pcapfiles+=1
 		strs.append("\n" + pcap_file)
 
