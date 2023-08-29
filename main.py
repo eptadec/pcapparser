@@ -278,6 +278,10 @@ def main():
 			except:
 				continue
 
+			#общий лог
+			strs.append(all_parse)
+			f.close()
+
 			#составляем список если нашли домены
 			if ip_and_domain !=[]:
 				#если вернулся не пустой список, то там лежит строка с доменом, её потом добавим в список для ВСЕХ доменов
@@ -286,10 +290,11 @@ def main():
 
 				# ищем айди в имени файла, без повторок на конце !!! -> "(1),(2)"
 				match = re.search(r'id-(\d+)\.pcap', pcap_file)
-				# если нашли, то добавляем в результирующий список
+				# если нашли, то добавляем айди в результирующий список
 				if match:
-					domain_name_list.append(match.group(1))
 
+					domain_name_list.append(match.group(1))
+					#если эта строка найдется в массиве с уникальными доменами, то она не уникальна и к уникальным не заносим
 					if (string_for_print not in domain_name_list_unic):
 						domain_name_list_unic.append(string_for_print)
 						domain_name_list_unic.append(match.group(1))
@@ -298,24 +303,28 @@ def main():
 
 			#чекаем чтобы массив с айпи был не пустой
 			if vuln_ip != [] and vuln_ip !=[[]]:
-				#buff2.append(vuln_ip)
+				#т.к vuln_ip это всегда ['',['']] или ['',['','',''...]]
+				#то надо перебрать вложенный список с уязвимыми версиями:
 				for item in vuln_ip[1]:
+					#заодно сразу лепим сплошную строку из уязвимостей чтобы заюзать not in (я гений знаю)
 					buff2 = (buff2+item)
-					#print(buff2)
+				#и также к строке лепим айпишники
 				string_for_compare = (vuln_ip[0] + ": " + buff2)
+				#ну и т.к я выбираю как строки будут выглядить, то можно между собой их сравнить
+				#если строка попадается в списке с уникальными, то она не уникальна(х2 гений)
 				if (string_for_compare not in vuln_ip_list_unic):
+					#если строки нет, то заносим в список с уникальными
 					vuln_ip_list_unic.append(string_for_compare)
+					#ну и айди на всякий случай тоже следом пришлепываем
 					match = re.search(r'id-(\d+)\.pcap', pcap_file)
 					if match:
 						vuln_ip_list_unic.append(match.group(1))
-
-
-				#print("----\n")
+				#выводим колбасу из айпи и уязвимостей
 				print(f"{vuln_ip}\n{pcap_file}\n")
-				#print(string_for_compare)
+				#на всякий случай еще один список, без сравнений по уникальности
 				vuln_ip_list.append(vuln_ip)
-			strs.append(all_parse)
-			f.close()
+
+		#дальше записи в файлики всех списков с найденными преколами
 
 		flat_result=flatten_list(strs)
 		output_file="PARSER_LOG.txt"
