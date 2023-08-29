@@ -189,6 +189,7 @@ def print_version(user_agent):
 	buff.append("- " * 44)
 	return buff, vuln_ip
 
+#делает из [ [],[[],[]] ] -> [ [], [], [] ]
 def flatten_list(nested_list):
     flat_list = []
     for item in nested_list:
@@ -198,6 +199,8 @@ def flatten_list(nested_list):
             flat_list.append(item)
     return flat_list
 
+def check_domain(domain_list):
+	print(domain_list)
 def main():
 
 	indicator = 1
@@ -250,6 +253,8 @@ def main():
 		strs=[]#этот cписок для основного лога
 		vuln_ip_list=[]#этот cписок для айпи с уязвимыми версиями
 		domain_name_list=[]#этот cписок для всех доменных имен
+		domain_name_list_unic=[]#этот cписок без повторных доменов
+		matches = []
 
 	#основной цикл с вызовом функий и записью файла
 		for pcap_file in pcap_files:
@@ -264,15 +269,43 @@ def main():
 
 			pcap = dpkt.pcap.Reader(f)
 			#вызов основной функции
-			all_parse, vuln_ip, domain_name = printPcap(pcap)
+			all_parse, vuln_ip, ip_and_domain = printPcap(pcap)
 
 			#составляем список если нашли домены
-			if domain_name !=[]:
-				#print(domain_name)
-				domain_name_list.append(domain_name)
-				match=re.search(r'id-(\d+)\.pcap', pcap_file)
+			if ip_and_domain !=[]:
+				#если вернулся не пустой список, то там лежит строка с доменом, её потом добавим в список для ВСЕХ доменов
+				domain_name_list.append(ip_and_domain)
+				# ищем айди в имени файла, без повторок на конце !!! -> "(1),(2)"
+				match = re.search(r'id-(\d+)\.pcap', pcap_file)
+				# если нашли, то добавляем в результирующий список
 				if match:
 					domain_name_list.append(match.group(1))
+
+				#ищем домен в строке, потому что я возвращаю строку а не имя домена
+				match = re.search(r's\|d:\s*([\w.-]+)', ip_and_domain[0])
+				if match:
+					#здесь имя домена
+					domain_name=match.group(1)
+					#для каждого элемента в списке
+
+					for item in domain_name_list:
+						#print("item ",item)
+						#print("domain ",domain)
+						#если есть подсписок, то там лежит айпи с доменом
+						if isinstance(item, list):
+							if domain_name not in matches:
+								matches.append(domain_name)
+								#ищем айди в имени файла, без повторок на конце !!! -> "(1),(2)"
+								match=re.search(r'id-(\d+)\.pcap', pcap_file)
+								#если нашли, то добавляем в результирующий список
+								if match:
+									#это для списка без повторок
+									domain_name_list_unic.append(ip_and_domain)
+									domain_name_list_unic.append(match.group(1))
+
+					#print(matches)
+					#print(domain_name_list_unic)
+			#print(domain_name_list)
 
 			#чекаем чтобы массив с айпи был не пустой
 			if vuln_ip != [] and vuln_ip !=[[]]:
@@ -302,6 +335,12 @@ def main():
 			for item in flat_domain_name_list:
 				txt_file.write(item+'\n')
 
+		flat_domain_name_list_unic = flatten_list(domain_name_list_unic)
+		output_domain_name_list_unic = "PARSER_unic_domain_names.txt"
+
+		with open(output_domain_name_list_unic,'w',encoding='utf-8') as txt_file:
+			for item in flat_domain_name_list_unic:
+				txt_file.write(item+'\n')
 
 
 		print(f"--- {count_pcapfiles} pcap files in {(time.time() - start_time)} seconds ---")
