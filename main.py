@@ -312,15 +312,18 @@ def main():
 				string_for_compare = (vuln_ip[0] + ": " + buff2)
 				#ну и т.к я выбираю как строки будут выглядить, то можно между собой их сравнить
 				#если строка попадается в списке с уникальными, то она не уникальна(х2 гений)
+
 				if (string_for_compare not in vuln_ip_list_unic):
 					#если строки нет, то заносим в список с уникальными
 					vuln_ip_list_unic.append(string_for_compare)
+					# выводим колбасу из айпи и уязвимостей
+					print(f"{vuln_ip}\n{pcap_file}\n")
 					#ну и айди на всякий случай тоже следом пришлепываем
 					match = re.search(r'id-(\d+)\.pcap', pcap_file)
 					if match:
 						vuln_ip_list_unic.append(match.group(1))
-				#выводим колбасу из айпи и уязвимостей
-				print(f"{vuln_ip}\n{pcap_file}\n")
+
+				#print(f"{vuln_ip}\n{pcap_file}\n")
 				#на всякий случай еще один список, без сравнений по уникальности
 				vuln_ip_list.append(vuln_ip)
 
