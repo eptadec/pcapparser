@@ -256,11 +256,10 @@ def main():
 		count_pcapfiles=0
 		strs=[]#этот cписок для основного лога
 		vuln_ip_list=[]#этот cписок для айпи с уязвимыми версиями
+		vuln_ip_list_unic=[]
 		domain_name_list=[]#этот cписок для всех доменных имен
 		domain_name_list_unic=[]#этот cписок без повторных доменов
-		ip_and_domain_result=[]
-		domain_src_ip_matches=[]#это cписок ip без повторных доменов
-		matches = []
+
 
 	#основной цикл с вызовом функий и записью файла
 		for pcap_file in pcap_files:
@@ -272,10 +271,12 @@ def main():
 			strs.append("\n" + pcap_file)
 
 			f = open(pcap_file, 'rb')
-
-			pcap = dpkt.pcap.Reader(f)
-			#вызов основной функции
-			all_parse, vuln_ip, ip_and_domain = printPcap(pcap)
+			try:
+				pcap = dpkt.pcap.Reader(f)
+				#вызов основной функции
+				all_parse, vuln_ip, ip_and_domain = printPcap(pcap)
+			except:
+				continue
 
 			#составляем список если нашли домены
 			if ip_and_domain !=[]:
@@ -293,44 +294,25 @@ def main():
 						domain_name_list_unic.append(string_for_print)
 						domain_name_list_unic.append(match.group(1))
 
-
-				#print(domain_name_list_unic)
-				'''
-				#ищем домен в строке, потому что я возвращаю строку а не имя домена
-				match_domain_name = re.search(r's\|d:\s*([\w.-]+)', ip_and_domain[0])
-				match_ip = re.findall(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', ip_and_domain[0])
-				src_ip=match_ip[0]
-				#print(domain_name_list)
-
-				if match_domain_name:
-					#здесь имя домена
-					domain_name=match_domain_name.group(1)
-					#для каждого элемента в списке
-
-					for item in domain_name_list:
-						#print("item ",item)
-						#print("domain ",domain)
-						#если есть подсписок, то там лежит айпи с доменом
-						if isinstance(item, list):
-							if domain_name not in matches:
-								matches.append(domain_name)
-								#ищем айди в имени файла, без повторок на конце !!! -> "(1),(2)"
-								match=re.search(r'id-(\d+)\.pcap', pcap_file)
-								#если нашли, то добавляем в результирующий список
-								if match:
-									#это для списка без повторок
-									domain_name_list_unic.append(ip_and_domain)
-									domain_name_list_unic.append(match.group(1))
-				'''
-
-					#print(matches)
-					#print(domain_src_ip_matches)
-					#print(domain_name_list_unic)
-			#print(domain_name_list)
+			buff2=''
 
 			#чекаем чтобы массив с айпи был не пустой
 			if vuln_ip != [] and vuln_ip !=[[]]:
+				#buff2.append(vuln_ip)
+				for item in vuln_ip[1]:
+					buff2 = (buff2+item)
+					#print(buff2)
+				string_for_compare = (vuln_ip[0] + ": " + buff2)
+				if (string_for_compare not in vuln_ip_list_unic):
+					vuln_ip_list_unic.append(string_for_compare)
+					match = re.search(r'id-(\d+)\.pcap', pcap_file)
+					if match:
+						vuln_ip_list_unic.append(match.group(1))
+
+
+				#print("----\n")
 				print(f"{vuln_ip}\n{pcap_file}\n")
+				#print(string_for_compare)
 				vuln_ip_list.append(vuln_ip)
 			strs.append(all_parse)
 			f.close()
@@ -349,6 +331,13 @@ def main():
 			for item in flat_vuln_ip_list:
 				txt_file.write(item+'\n')
 
+		flat_vuln_ip_list_unic = flatten_list(vuln_ip_list_unic)
+		output_vuln_ip_list_unic = "PARSER_UNIC_vuln_ip.txt"
+
+		with open(output_vuln_ip_list_unic, 'w', encoding='utf-8') as txt_file:
+			for item in flat_vuln_ip_list_unic:
+				txt_file.write(item + '\n')
+
 		flat_domain_name_list = flatten_list(domain_name_list)
 		output_domain_name_list = "PARSER_domain_names.txt"
 
@@ -357,7 +346,7 @@ def main():
 				txt_file.write(item+'\n')
 
 		flat_domain_name_list_unic = flatten_list(domain_name_list_unic)
-		output_domain_name_list_unic = "PARSER_unic_domain_names.txt"
+		output_domain_name_list_unic = "PARSER_UNIC_domain_names.txt"
 
 		with open(output_domain_name_list_unic,'w',encoding='utf-8') as txt_file:
 			for item in flat_domain_name_list_unic:
