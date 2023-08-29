@@ -39,12 +39,16 @@ def printPcap(pcap):
 				udp = ip.data
 			except:
 				pass
-
+			temp_buff=[]
 			try:
 				dns = dpkt.dns.DNS(udp.data)
 				#print("dns распознан")
 				for qname in dns.qd:
-					domain_name.append(src + ' | ' + dst + ' s|d: '+ qname.name)
+					temp_buff.append(src)
+					temp_buff.append(dst)
+					temp_buff.append(qname.name)
+					domain_name.extend(temp_buff)
+
 					#print("domain name:", domain_name)
 			except:
 				pass
@@ -254,6 +258,8 @@ def main():
 		vuln_ip_list=[]#этот cписок для айпи с уязвимыми версиями
 		domain_name_list=[]#этот cписок для всех доменных имен
 		domain_name_list_unic=[]#этот cписок без повторных доменов
+		ip_and_domain_result=[]
+		domain_src_ip_matches=[]#это cписок ip без повторных доменов
 		matches = []
 
 	#основной цикл с вызовом функий и записью файла
@@ -274,18 +280,31 @@ def main():
 			#составляем список если нашли домены
 			if ip_and_domain !=[]:
 				#если вернулся не пустой список, то там лежит строка с доменом, её потом добавим в список для ВСЕХ доменов
-				domain_name_list.append(ip_and_domain)
+				string_for_print=(ip_and_domain[0]+" | "+ip_and_domain[1]+" s|d: "+ip_and_domain[2])
+				domain_name_list.append(string_for_print)
+
 				# ищем айди в имени файла, без повторок на конце !!! -> "(1),(2)"
 				match = re.search(r'id-(\d+)\.pcap', pcap_file)
 				# если нашли, то добавляем в результирующий список
 				if match:
 					domain_name_list.append(match.group(1))
 
+					if (string_for_print not in domain_name_list_unic):
+						domain_name_list_unic.append(string_for_print)
+						domain_name_list_unic.append(match.group(1))
+
+
+				#print(domain_name_list_unic)
+				'''
 				#ищем домен в строке, потому что я возвращаю строку а не имя домена
-				match = re.search(r's\|d:\s*([\w.-]+)', ip_and_domain[0])
-				if match:
+				match_domain_name = re.search(r's\|d:\s*([\w.-]+)', ip_and_domain[0])
+				match_ip = re.findall(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', ip_and_domain[0])
+				src_ip=match_ip[0]
+				#print(domain_name_list)
+
+				if match_domain_name:
 					#здесь имя домена
-					domain_name=match.group(1)
+					domain_name=match_domain_name.group(1)
 					#для каждого элемента в списке
 
 					for item in domain_name_list:
@@ -302,8 +321,10 @@ def main():
 									#это для списка без повторок
 									domain_name_list_unic.append(ip_and_domain)
 									domain_name_list_unic.append(match.group(1))
+				'''
 
 					#print(matches)
+					#print(domain_src_ip_matches)
 					#print(domain_name_list_unic)
 			#print(domain_name_list)
 
